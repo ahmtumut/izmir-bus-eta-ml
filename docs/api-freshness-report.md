@@ -1,4 +1,4 @@
-# API Freshness Raporu
+Get-Content docs\data-dictionary.md | Select-String "HataVarMi"# API Freshness Raporu
 
 ## Test Ozeti
 
