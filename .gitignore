@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Ham veri repository'ye yuklenmeyecek (gorev madde 13)
+data/raw/
+data/processed/
+
+*.log
+.pytest_cache/
+.vscode/
+.DS_Store
