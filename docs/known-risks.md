@@ -76,6 +76,37 @@ yaklasim potansiyel ek bilgiyi (trail'deki diger noktalari) gozardi
 ediyor - Faz 2'de trail noktalarinin sirasi netlesirse bu karar
 gozden gecirilebilir.
 
+**YENI BULGU - trail noktalari beklenenden farkli davraniyor
+(cozulmemis soru):** Stale detection testinde (3 cycle, 60s araliklarla)
+Hat 515 / Arac 2221 icin trail'deki 4 noktadan 3'unun **3 cycle boyunca
+neredeyse birebir sabit kaldigi**, sadece 1 noktanin cok az kaydigi
+gozlemlendi:
+
+```
+Cycle 1: (38.43857833,27.167825) (38.43732333,27.16739667) (38.386275,27.176935)   (38.43754,27.16754)
+Cycle 2: (38.43857833,27.167825) (38.43732333,27.16739667) (38.387195,27.17591667) (38.43754,27.16754)
+Cycle 3: (38.43857833,27.167825) (38.43732333,27.16739667) (38.38755167,27.175665) (38.43754,27.16754)
+```
+
+Bu, ilk varsayimimizin ("trail = aracin son birkac GPS noktasi, her
+cycle'da guncellenir") **tam dogru olmayabilecegini** gosteriyor.
+Olasi aciklamalar (henuz ayirt edilemedi):
+1. API'de bazi trail girdileri cache'lenip guncellenmeden tekrar
+   donduruluyor olabilir.
+2. `OtobusId` fiziksel olarak birden fazla arac/sefere karsilik
+   geliyor olabilir (ID tekrar kullanimi/cakismasi).
+3. Trail'deki bazi noktalar sabit bir referans konum olabilir.
+
+**Durum:** Bu soru Faz 1 kapsaminda cozulemedi - 3 cycle'lik (3 dakika)
+pencere ayirt etmeye yetmiyor. 24 saatlik ana veri toplama sonrasi
+cok daha genis bir pencereyle tekrar incelenmesi planlaniyor.
+
+**Etki:** Su anki stale detection (`scripts/detect_stale_positions.py`)
+sonuclari bu belirsizlik nedeniyle **temkinli yorumlanmali** - "arac X
+hareketsiz kaldi" sonucu, gercekte "trail'in sabit kalan bir bileseni
+secildi" anlamina da gelebilir. Faz 2'ye kadar bu script'in ciktisi
+kesin/nihai kabul edilmemeli.
+
 ## 5. `HataVarMi` alani dokumantasyonda yok
 
 Gercek response'ta `HataVarMi: false` seklinde bir ust-seviye alan
