@@ -63,6 +63,19 @@ kullanilacagi netlestirilmeli - simdilik hepsi ayni `observed_at`
 (bizim client-side sorgu zamanimiz) ile kaydediliyor, bu da gercek
 kronolojik sirayi kaybediyor olabilir.
 
+**Hareket metrigi hesaplamasina etkisi (dogrulandi):** Ilk denemede,
+trail noktalari ayiklanmadan hareket metrigi hesaplanmisti ve 108
+satirin 28'i (%26) "gercekci olmayan hiz" (300-560 km/h) olarak
+cikti - hepsinin `elapsed_seconds` degeri tam 60.0 idi, yani sorun
+cycle'lar arasi degil, **ayni cycle icindeki farkli trail noktalarinin
+yanlis eslesmesinden** kaynaklaniyordu. Duzeltme: her
+`(hat, arac, observed_at)` icin sadece response'taki ilk nokta
+temsilci olarak aliniyor (`scripts/compute_movement_metrics.py::dedupe_trail_points`).
+Bu duzeltmeyle gercekci olmayan hiz sayisi 0'a dustu, ancak bu
+yaklasim potansiyel ek bilgiyi (trail'deki diger noktalari) gozardi
+ediyor - Faz 2'de trail noktalarinin sirasi netlesirse bu karar
+gozden gecirilebilir.
+
 ## 5. `HataVarMi` alani dokumantasyonda yok
 
 Gercek response'ta `HataVarMi: false` seklinde bir ust-seviye alan
