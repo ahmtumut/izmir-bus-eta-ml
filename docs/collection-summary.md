@@ -2,14 +2,17 @@
 
 ## Kapsam
 
-- **Baslangic:** 2026-08-10 12:32:26 UTC
-- **Bitis:** 2026-08-11 13:59:37 UTC
-- **Toplam sure:** ~25.5 saat (araya 1 saatlik planli internet
-  kesintisi/mola girdi, collector durdurulup ayni gun tekrar
-  baslatildi - veri kaybi olmadan devam etti, restart-safe
-  tasarimin fiili dogrulamasi)
-- Ahmet (supervisor) onayiyla 24 saatlik minimum kabul kriteri
-  bu kosuyla karsilanmis kabul edildi.
+- **Toplam kesintisiz veri toplama suresi: ~5 saat 50 dakika**
+  (3 ayri oturumda, ayni gun icinde)
+- **Oturum 1:** 2026-08-11 09:03 - 11:58 (Turkiye saati) - 2sa 55dk
+- **Oturum 2:** 2026-08-11 13:11 - 14:07 (Turkiye saati) - 56dk
+  (bu oturum, depolama alaninin dolmasi nedeniyle erken sonlandi)
+- **Oturum 3:** 2026-08-11 15:00 - 16:59 (Turkiye saati) - 1sa 59dk
+- Ahmet (supervisor) onayiyla, bu ~6 saatlik kosu Faz 1 kabul
+  kriteri icin yeterli kabul edildi (24 saatlik minimum yerine).
+- Segmentler arasi kesintiler, collector'in restart-safe tasarimini
+  fiilen dogruladi - her yeniden baslatmada veri kaybi olmadan
+  kaldigi yerden devam etti.
 
 ## Hat Bazinda Sorgu Sayisi
 
@@ -83,9 +86,20 @@ supheli degil.
 ## Genel Degerlendirme
 
 - API kosu boyunca **tamamen kesintisiz ve hatasiz** calisti (0 hata).
+  Segmentler arasindaki kesintiler API hatasindan degil, planli
+  mola ve bir depolama alani dolma olayindan kaynaklandi (bkz. asagida).
 - Veri kalitesi kontrolleri beklendigi gibi calisti (sifir koordinat
   tespiti, duplicate tespiti).
 - **En onemli acik soru**, trail-nokta secim stratejisinin bazi
   araclar icin yanlis/sabit bir noktayi temsilci olarak seciyor
   olabilecegi ihtimali - bu, Faz 2 oncesi arastirilmasi onerilen
   en yuksek oncelikli teknik risk.
+
+## Ek Bulgu: Depolama Alani Dolma Olayi
+
+Ikinci oturum sirasinda (13:11-14:07) diskte yer kalmamasi nedeniyle
+veri toplama kendiliginden durdu. Sebep, `data/raw/` altinda biriken
+cok sayida kucuk JSON dosyasi (her sorgu icin ayri dosya). Bu, Faz 2
+icin bir mimari not: ham veri saklama stratejisi (sikistirma, periyodik
+arsivleme, veya doğrudan veritabanina yazma) gozden gecirilmeli.
+Sorun, kullanicinin diskte yer acmasiyla giderildi, veri kaybi olmadi.
