@@ -107,6 +107,20 @@ hareketsiz kaldi" sonucu, gercekte "trail'in sabit kalan bir bileseni
 secildi" anlamina da gelebilir. Faz 2'ye kadar bu script'in ciktisi
 kesin/nihai kabul edilmemeli.
 
+**25.5 saatlik ana kosu sonrasi guncel bulgu (madde 10 karsilastirmasi
+ile):** Hat 515'te 353/356 sorguda "hareketsiz" gorunen 4 arac
+(12001, 12154, 11515, 2002), destekleyici `hattinyaklasanotobusleri`
+API'sinde de tam olarak bu 4 ID ile eslesti - VE bu API'deki
+`KalanDurakSayisi` degerleri birbirinden farkli ve makul cikti
+(5, 17, 25, 25). Bu, onceki "trail noktasi sabit bir referans/cache
+olabilir" hipotezini zayiflatiyor; bunun yerine yeni bir hipotez
+guclendi: **arac GPS koordinati donmus olabilir, ama aracin sefer
+ilerlemesi (KalanDurakSayisi, muhtemelen GPS'ten bagimsiz bir
+kaynaktan hesaplaniyor) gercekten degisiyor.** Yani sorun "sahte
+arac/duplicate ID" degil, muhtemelen **konum alaninin (KoorX/KoorY)
+guncellenmeme sorunu** - bu, Faz 2'de arastirilmasi gereken daha
+spesifik bir teknik risk.
+
 ## 5. `HataVarMi` alani dokumantasyonda yok
 
 Gercek response'ta `HataVarMi: false` seklinde bir ust-seviye alan
