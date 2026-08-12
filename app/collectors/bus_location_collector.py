@@ -1,6 +1,10 @@
-﻿"""
-Ana collector. Pilot hatlari periyodik olarak sorgular, ham veriyi
-saklar, normalize edip dogrular, ingestion log'u tutar.
+"""
+Ana collector (Faz 2). Pilot hatlari periyodik olarak sorgular, ham veriyi
+ve normalize edilmis arac konumlarini PostgreSQL/PostGIS'e yazar.
+
+Faz 1'e gore degisiklik: JSON dosyasi / CSV yazan raw_storage yerine
+db_storage kullanilir. Kucuk JSON dosyalari problemi ortadan kalkar
+(Faz 2 madde 2 kabul kriteri).
 """
 import hashlib
 import json
@@ -9,84 +13,78 @@ from datetime import datetime, timezone
 
 import requests
 
-from app.storage.raw_storage import (
-    save_raw_response,
-    append_normalized_records,
-    append_ingestion_log,
-)
+from app.storage import db_storage
 from app.validation.quality import validate_vehicle, detect_duplicate_ids
 from app.schemas.vehicle import NormalizedVehiclePosition
 
 BASE_URL = "https://openapi.izmir.bel.tr/api/iztek/hatotobuskonumlari/{hat_id}"
 REQUEST_TIMEOUT = 10
+COLLECTOR_VERSION = "faz2-db-v1"  # ileride git commit SHA ile degistirilebilir
 
 
-def collect_line(line_no: str) -> str:
+def collect_line(conn, run_id: int, line_no: str) -> str:
     started_at = datetime.now(timezone.utc)
     url = BASE_URL.format(hat_id=line_no)
-
-    log_row = {
-        "started_at": started_at.isoformat(),
-        "finished_at": None,
-        "line_no": line_no,
-        "http_status": None,
-        "response_time_ms": None,
-        "vehicle_count": 0,
-        "valid_vehicle_count": 0,
-        "invalid_vehicle_count": 0,
-        "duplicate_count": 0,
-        "payload_hash": None,
-        "result": None,
-    }
 
     try:
         resp = requests.get(url, timeout=REQUEST_TIMEOUT)
     except requests.Timeout:
-        log_row["result"] = "TIMEOUT"
-        log_row["finished_at"] = datetime.now(timezone.utc).isoformat()
-        append_ingestion_log(log_row)
+        db_storage.log_quality_event(
+            conn, stage="ingestion", severity="WARNING",
+            description=f"Hat {line_no}: request timeout",
+            ingestion_run_id=run_id, line_no=line_no,
+        )
         return "TIMEOUT"
-    except requests.RequestException:
-        log_row["result"] = "CONNECTION_ERROR"
-        log_row["finished_at"] = datetime.now(timezone.utc).isoformat()
-        append_ingestion_log(log_row)
+    except requests.RequestException as e:
+        db_storage.log_quality_event(
+            conn, stage="ingestion", severity="ERROR",
+            description=f"Hat {line_no}: connection error - {e}",
+            ingestion_run_id=run_id, line_no=line_no,
+        )
         return "CONNECTION_ERROR"
 
-    log_row["http_status"] = resp.status_code
-    log_row["response_time_ms"] = round(resp.elapsed.total_seconds() * 1000, 1)
-
     if resp.status_code == 429:
-        log_row["result"] = "RATE_LIMITED"
-        log_row["finished_at"] = datetime.now(timezone.utc).isoformat()
-        append_ingestion_log(log_row)
+        db_storage.log_quality_event(
+            conn, stage="ingestion", severity="WARNING",
+            description=f"Hat {line_no}: rate limited (429)",
+            ingestion_run_id=run_id, line_no=line_no,
+        )
         return "RATE_LIMITED"
 
     if resp.status_code != 200:
-        log_row["result"] = "HTTP_ERROR"
-        log_row["finished_at"] = datetime.now(timezone.utc).isoformat()
-        append_ingestion_log(log_row)
+        db_storage.log_quality_event(
+            conn, stage="ingestion", severity="ERROR",
+            description=f"Hat {line_no}: HTTP {resp.status_code}",
+            ingestion_run_id=run_id, line_no=line_no,
+        )
         return "HTTP_ERROR"
 
     raw_text = resp.text
     if not raw_text.strip():
-        log_row["result"] = "EMPTY_RESPONSE"
-        log_row["finished_at"] = datetime.now(timezone.utc).isoformat()
-        append_ingestion_log(log_row)
+        db_storage.log_quality_event(
+            conn, stage="ingestion", severity="WARNING",
+            description=f"Hat {line_no}: empty response",
+            ingestion_run_id=run_id, line_no=line_no,
+        )
         return "EMPTY_RESPONSE"
 
     try:
         data = json.loads(raw_text)
     except json.JSONDecodeError:
-        log_row["result"] = "JSON_PARSE_ERROR"
-        log_row["finished_at"] = datetime.now(timezone.utc).isoformat()
-        append_ingestion_log(log_row)
+        db_storage.log_quality_event(
+            conn, stage="ingestion", severity="ERROR",
+            description=f"Hat {line_no}: JSON parse error",
+            ingestion_run_id=run_id, line_no=line_no,
+        )
         return "JSON_PARSE_ERROR"
 
     vehicles = data.get("HatOtobusKonumlari")
     if vehicles is None:
-        log_row["result"] = "UNKNOWN_SCHEMA"
-        log_row["finished_at"] = datetime.now(timezone.utc).isoformat()
-        append_ingestion_log(log_row)
+        db_storage.log_quality_event(
+            conn, stage="ingestion", severity="ERROR",
+            description=f"Hat {line_no}: beklenmeyen schema (HatOtobusKonumlari yok)",
+            ingestion_run_id=run_id, line_no=line_no,
+        )
         return "UNKNOWN_SCHEMA"
 
     payload_hash = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()[:16]
@@ -126,23 +124,35 @@ def collect_line(line_no: str) -> str:
         else:
             invalid_count += 1
 
-    save_raw_response(line_no, started_at, raw_text)
-    append_normalized_records(normalized_records)
+    # --- DB'ye yaz ---
+    snapshot_id = db_storage.save_raw_snapshot(
+        conn, ingestion_run_id=run_id, source_api="main_api", line_no=line_no,
+        requested_at=started_at, http_status=resp.status_code, raw_text=raw_text,
+    )
+    inserted = db_storage.save_vehicle_observations(
+        conn, raw_snapshot_id=snapshot_id, line_no=line_no,
+        observed_at=started_at, records=normalized_records,
+    )
 
-    log_row["vehicle_count"] = len(vehicles)
-    log_row["valid_vehicle_count"] = valid_count
-    log_row["invalid_vehicle_count"] = invalid_count
-    log_row["duplicate_count"] = len(duplicate_ids)
-    log_row["payload_hash"] = payload_hash
-    log_row["result"] = "OK"
-    log_row["finished_at"] = datetime.now(timezone.utc).isoformat()
-    append_ingestion_log(log_row)
+    if duplicate_ids:
+        db_storage.log_quality_event(
+            conn, stage="ingestion", severity="INFO",
+            description=f"Hat {line_no}: response icinde {len(duplicate_ids)} exact duplicate",
+            ingestion_run_id=run_id, line_no=line_no,
+            context={"duplicate_count": len(duplicate_ids)},
+        )
+
+    print(f"    -> snapshot_id={snapshot_id}, {inserted} arac gozlemi yazildi "
+          f"(valid={valid_count}, invalid={invalid_count})")
 
     return "OK"
 
 
 def run_collector(lines: list, cycle_interval_seconds: int = 60, delay_between_lines: int = 3):
-    print(f"Collector basladi. Hatlar: {lines}")
+    conn = db_storage.get_connection()
+    run_id = db_storage.start_ingestion_run(conn, target_lines=lines,
+                                             collector_version=COLLECTOR_VERSION)
+    print(f"Collector basladi. ingestion_run_id={run_id}, Hatlar: {lines}")
     print("Durdurmak icin Ctrl+C\n")
 
     cycle_num = 0
@@ -153,7 +163,7 @@ def run_collector(lines: list, cycle_interval_seconds: int = 60, delay_between_l
             print(f"--- Cycle {cycle_num} ---")
 
             for i, line_no in enumerate(lines):
-                result = collect_line(line_no)
+                result = collect_line(conn, run_id, line_no)
                 print(f"  Hat {line_no}: {result}")
                 if i < len(lines) - 1:
                     time.sleep(delay_between_lines)
@@ -164,3 +174,6 @@ def run_collector(lines: list, cycle_interval_seconds: int = 60, delay_between_l
 
     except KeyboardInterrupt:
         print(f"\nCollector durduruldu. Toplam {cycle_num} cycle tamamlandi.")
+    finally:
+        db_storage.end_ingestion_run(conn, run_id)
+        conn.close()

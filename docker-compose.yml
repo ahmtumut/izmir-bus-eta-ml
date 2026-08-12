@@ -1,0 +1,39 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: izmir_bus_eta_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: eta_user
+      POSTGRES_PASSWORD: eta_password_dev_only
+      POSTGRES_DB: izmir_bus_eta
+      # Windows'ta Türkçe karakter/collation sorunlarından kaçınmak için
+      # veritabanını C.UTF-8 locale ile başlatıyoruz.
+      POSTGRES_INITDB_ARGS: "--locale=C.UTF-8 --encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eta_user -d izmir_bus_eta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Opsiyonel: Tabloları görsel incelemek için pgAdmin.
+  # İhtiyaç yoksa bu servisi silebilirsin, sadece disk/RAM tüketir.
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: izmir_bus_eta_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin_dev_only
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgis
+
+volumes:
+  pgdata:
