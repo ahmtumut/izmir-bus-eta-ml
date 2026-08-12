@@ -2,6 +2,9 @@
 
 ingestion_run_id = 3 (60 dakikalik gozlem, 12 arac, 3 pilot hat: 515, 121, 761)
 
+**Repository:** https://github.com/ahmtumut/izmir-bus-eta-ml
+**Final commit SHA:** f442dcd07f0b778167f27f386259ff262ecc1ca3
+
 ## 1. GPS Belirsizligi Arastirmasi (madde 1)
 
 Bkz. `docs/gps-uncertainty-report-run3.md` (v2, nokta/run bazli).
@@ -69,9 +72,23 @@ Bkz. `docs/map-matching-findings.md`.
 
 - 94 eta_training_samples uretildi, 0 future-leakage riski (T0 her
   zaman T1'den once, DB constraint + uygulama kontrolu ikisi de var).
-- label_quality dagilimi: buyuk cogunlugu SILVER (MEDIUM confidence
-  arrival event'lerden), GOLD orneği yok (yukaridaki HIGH confidence
-  eksikligi nedeniyle).
+
+**Label kalite dagilimi (net sayilar):**
+
+| label_quality | count |
+|---|---|
+| GOLD | 0 |
+| SILVER | 94 |
+| REJECTED | 0 |
+
+Tum orneklerin SILVER olmasi, arrival event'lerin tamaminin MEDIUM
+confidence (gps_only) olmasindan kaynaklaniyor - bkz. madde 6 notlari.
+GOLD ornegin hic olmamasi, bu 60 dakikalik/12 araclik veri setinde
+support API'nin dar zaman penceresi nedeniyle HIC bir arrival event'i
+HIGH confidence ile dogrulayamadigini gosteriyor. Bu, Faz 3'e gecmeden
+once uzerinde durulmasi gereken bir bulgu: ya gozlem penceresi/collector
+interval'i kucultulmeli, ya da support API'nin capraz dogrulama
+penceresi genisletilmeli.
 
 ## 8. Support API Capraz Dogrulama (madde 8)
 
