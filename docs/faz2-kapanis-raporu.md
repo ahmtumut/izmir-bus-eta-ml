@@ -3,7 +3,9 @@
 ingestion_run_id = 3 (60 dakikalik gozlem, 12 arac, 3 pilot hat: 515, 121, 761)
 
 **Repository:** https://github.com/ahmtumut/izmir-bus-eta-ml
-**Final commit SHA:** 584444a7144cf12ba7dc0e0c0efb6f412043b247
+**Final commit SHA:** c0efcd806779af3b758c4392557342272dacc025
+**Not:** Bu SHA, Supervisor'in Faz 2 kapanis geri bildirimindeki 5 kalemin
+tamaminin uygulandigi commit'i isaret ediyor (bkz. docs/faz2-kapanis-duzeltmeleri.md).
 
 ## 1. GPS Belirsizligi Arastirmasi (madde 1)
 
