@@ -116,27 +116,82 @@ def save_raw_snapshot(conn, ingestion_run_id: int, source_api: str, line_no: str
 # vehicle_observations
 # ---------------------------------------------------------------------------
 
+def normalize_source_direction(raw_direction):
+    """
+    Kaynak API'nin 'Yon' alanini routes.direction konvansiyonuna (0/1) cevirir.
+
+    VARSAYIM: Ana API'nin 'Yon' alani, ESHOT guzergah CSV'sindeki YON alaniyla
+    (1=gidis, 2=donus) AYNI konvansiyonu kullaniyor - iki veri kaynagi da
+    ayni belediye sisteminden geldigi icin bu makul bir varsayim, ama
+    DOGRULANMADI. 1 -> 0 (gidis), 2 -> 1 (donus). Baska bir deger (0, 3,
+    None, vb.) gelirse None doner - cagiran taraf bunu SOURCE_DIRECTION_UNKNOWN
+    olarak isaretlemeli, sessizce 0 ya da 1 varsayilmamali.
+
+    Gercek veri toplaninca bu varsayim kontrol edilmeli (bkz.
+    data_quality_events'teki SOURCE_DIRECTION_UNKNOWN loglari).
+    """
+    if raw_direction is None:
+        return None
+    try:
+        val = int(raw_direction)
+    except (ValueError, TypeError):
+        return None
+
+    if val == 1:
+        return 0
+    if val == 2:
+        return 1
+    return None
+
+
 def save_vehicle_observations(conn, raw_snapshot_id: int, line_no: str,
                                observed_at: datetime, records: list):
     """
     records: bus_location_collector.py'daki normalized_records listesi -
-    her biri en az {vehicle_id, latitude, longitude} icermeli.
+    her biri en az {vehicle_id, latitude, longitude} icermeli, varsa
+    {direction} (ham API 'Yon' degeri) de kullanilir.
+
+    Madde 1: ayni response icindeki her nokta response_index ile ayri satir
+    olarak saklanir; "ilk nokta gunceldir" varsayimi yapilmaz.
+    """
+def save_vehicle_observations(conn, raw_snapshot_id: int, line_no: str,
+                               observed_at: datetime, records: list):
+    """
+    records: bus_location_collector.py'daki normalized_records listesi -
+    her biri en az {vehicle_id, latitude, longitude} icermeli, varsa
+    {direction} (ham API 'Yon' degeri) ve {quality_flags} (';' ile
+    birlestirilmis string) de kullanilir.
 
     Madde 1: ayni response icindeki her nokta response_index ile ayri satir
     olarak saklanir; "ilk nokta gunceldir" varsayimi yapilmaz.
     """
     inserted = 0
+    skipped_missing_id = 0
     with conn.cursor() as cur:
         for idx, r in enumerate(records):
+            if r.get("vehicle_id") is None:
+                # vehicle_observations.vehicle_id NOT NULL - MISSING_VEHICLE_ID
+                # kayitlari eklenmiyor (NOT NULL ihlali yerine sessizce atlaniyor,
+                # ama izlenebilirlik icin quality event olarak loglaniyor).
+                skipped_missing_id += 1
+                log_quality_event(
+                    conn, stage="ingestion", severity="WARNING",
+                    description=f"response_index={idx}: vehicle_id eksik (MISSING_VEHICLE_ID), "
+                                  "vehicle_observations'a yazilamadi.",
+                    line_no=line_no, context={"raw_snapshot_id": raw_snapshot_id, "response_index": idx},
+                )
+                continue
+
             lat, lon = r.get("latitude"), r.get("longitude")
             if lat is None or lon is None:
                 continue  # gecersiz koordinat - ayri quality event olarak loglanabilir
 
+            source_direction = normalize_source_direction(r.get("direction"))
+
+            raw_flags_str = r.get("quality_flags", "")
+            record_flags = [f for f in raw_flags_str.split(";") if f] if raw_flags_str else []
+
             if lat == 0 and lon == 0:
-                # "Null island" sentinel degeri - API/GPS'in gercek konum
-                # uretemedigi durumlarda donen bilinen hatali deger.
-                # Sessizce atlamiyoruz (kayit izlenebilirligi icin saklaniyor),
-                # ama gercek bir GPS okumasi gibi de degerlendirilmiyor.
                 position_quality = "UNKNOWN_POSITION"
                 reason = ("Koordinat (0,0) - null island sentinel degeri, "
                            "gercek bir GPS okumasi degil. Map-matching'den haric tutulmali.")
@@ -148,11 +203,12 @@ def save_vehicle_observations(conn, raw_snapshot_id: int, line_no: str,
                 """
                 INSERT INTO vehicle_observations
                     (raw_snapshot_id, response_index, vehicle_id, line_no, observed_at,
-                     geom, raw_lat, raw_lon, position_quality, position_quality_reason)
+                     geom, raw_lat, raw_lon, position_quality, position_quality_reason,
+                     source_direction, quality_flags)
                 VALUES
                     (%s, %s, %s, %s, %s,
                      ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
-                     %s, %s, %s, %s)
+                     %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (raw_snapshot_id, response_index) DO NOTHING
                 """,
                 (
@@ -161,6 +217,8 @@ def save_vehicle_observations(conn, raw_snapshot_id: int, line_no: str,
                     lat, lon,               # raw_lat, raw_lon
                     position_quality,
                     reason,
+                    source_direction,
+                    record_flags,
                 ),
             )
             inserted += 1
@@ -240,4 +298,17 @@ def update_position_quality(conn, observation_id: int, quality: str, reason: str
             WHERE id = %s
             """,
             (quality, reason, observation_id),
+        )
+
+
+def add_observation_quality_flag(conn, observation_id: int, flag: str):
+    """vehicle_observations.quality_flags dizisine tekrarsiz sekilde flag ekler."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE vehicle_observations
+            SET quality_flags = ARRAY(SELECT DISTINCT unnest(quality_flags || ARRAY[%s]))
+            WHERE id = %s
+            """,
+            (flag, observation_id),
         )

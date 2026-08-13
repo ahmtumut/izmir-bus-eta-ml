@@ -3,7 +3,7 @@
 ingestion_run_id = 3 (60 dakikalik gozlem, 12 arac, 3 pilot hat: 515, 121, 761)
 
 **Repository:** https://github.com/ahmtumut/izmir-bus-eta-ml
-**Final commit SHA:** f442dcd07f0b778167f27f386259ff262ecc1ca3
+**Final commit SHA:** 584444a7144cf12ba7dc0e0c0efb6f412043b247
 
 ## 1. GPS Belirsizligi Arastirmasi (madde 1)
 

@@ -1,15 +1,15 @@
 """
-Faz 2 madde 9: Baseline ETA modelleri.
+Faz 2 madde 9 (v2 - Supervisor duzeltmesi): Baseline ETA modelleri.
 
-Iki basit baseline:
-1. distance_remaining_m / son gecerli ortalama hiz (recent_speed_mps)
-2. Hat-yon-durak bazli MEDIAN actual_eta_seconds (o segment icin daha once
-   gorulen ornekler - "tarihsel veri" burada ayni run icindeki diger
-   orneklerdir, kucuk bir veri setiyle calisildigi acikca belirtiliyor)
+DEGISIKLIK: Baseline 2 (segment medyani) artik GERCEK leave-one-out
+uyguluyor - bir ornegin tahmini hesaplanirken, o ornegin actual_eta
+degeri KENDI segment medyanina KATILMIYOR. Bir segmentte sadece 1 ornek
+varsa (leave-one-out sonrasi 0 tarihsel veri kalir), o ornek icin
+Baseline 2 tahmini URETILEMEZ - atlanir, uydurma bir deger verilmez.
 
-Ikisi de gercek actual_eta_seconds ile karsilastirilir: MAE, RMSE,
-+-2 dakika dogruluk orani raporlanir. Sonuclar kotu olsa bile
-SAKLANMAZ/DEGISTIRILMEZ - oldugu gibi raporlanir (madde 9 geregi).
+Not: Faz 3'te asil degerlendirme train/test ayrimiyla yapilacak; bu
+script Faz 2 kapsaminda "en azindan leave-one-out" seviyesindeki
+minimum duzeltmeyi saglar.
 
 Kullanim:
     python scripts/compute_baseline_eta.py
@@ -41,12 +41,19 @@ def fetch_samples(conn):
 
 def baseline_speed_based(distance_remaining_m, recent_speed_mps):
     if recent_speed_mps is None or recent_speed_mps <= 0.5:
-        return None  # anlamli bir hiz tahmini yok - baseline uretilemiyor
+        return None
     return distance_remaining_m / recent_speed_mps
 
 
+def baseline_segment_median_leave_one_out(sample_id, key, segment_actuals):
+    """Bu ornegin actual_eta'sini HARIC tutarak segment medyanini hesaplar."""
+    others = [(sid, val) for sid, val in segment_actuals[key] if sid != sample_id]
+    if len(others) == 0:
+        return None  # leave-one-out sonrasi tarihsel veri kalmadi
+    return median(val for _, val in others)
+
+
 def compute_metrics(errors):
-    """errors: (predicted - actual) listesi (saniye)."""
     n = len(errors)
     if n == 0:
         return None
@@ -60,21 +67,16 @@ def run_baselines(conn):
     samples = fetch_samples(conn)
     print(f"{len(samples)} eta_training_samples bulundu.\n")
 
-    # --- Baseline 1: mesafe / son hiz ---
     b1_errors = []
     b1_skipped_no_speed = 0
 
-    # --- Baseline 2: segment medyani (line_no, direction, target_stop_id) ---
     segment_actuals = defaultdict(list)
     for (sid, vehicle_id, line_no, direction, stop_pk, actual_eta,
          dist_remaining, recent_speed, label_quality) in samples:
-        segment_actuals[(line_no, direction, stop_pk)].append(actual_eta)
-
-    segment_medians = {
-        key: median(vals) for key, vals in segment_actuals.items()
-    }
+        segment_actuals[(line_no, direction, stop_pk)].append((sid, actual_eta))
 
     b2_errors = []
+    b2_skipped_no_history = 0
     segment_sample_counts = {key: len(vals) for key, vals in segment_actuals.items()}
 
     for (sid, vehicle_id, line_no, direction, stop_pk, actual_eta,
@@ -86,13 +88,12 @@ def run_baselines(conn):
         else:
             b1_errors.append(pred1 - actual_eta)
 
-        # Segment medyanini "kendi ornegini haric tutarak" hesaplamak daha
-        # dogru olurdu (leave-one-out), ama kucuk veri setinde bu asiri
-        # karmasiklastirir - burada TUM segment medyani kullaniliyor ve
-        # bu acikca iyimser bir tahmin olabilir, sinirlama olarak belirtiliyor.
         key = (line_no, direction, stop_pk)
-        pred2 = segment_medians[key]
-        b2_errors.append(pred2 - actual_eta)
+        pred2 = baseline_segment_median_leave_one_out(sid, key, segment_actuals)
+        if pred2 is None:
+            b2_skipped_no_history += 1
+        else:
+            b2_errors.append(pred2 - actual_eta)
 
     print("=" * 60)
     print("BASELINE 1: distance_remaining_m / recent_speed_mps")
@@ -108,31 +109,36 @@ def run_baselines(conn):
 
     print()
     print("=" * 60)
-    print("BASELINE 2: Hat-yon-durak bazli MEDIAN actual_eta")
+    print("BASELINE 2: Hat-yon-durak bazli MEDIAN actual_eta (LEAVE-ONE-OUT)")
     print("=" * 60)
     m2 = compute_metrics(b2_errors)
     if m2:
-        print(f"  n={m2['n']}")
+        print(f"  n={m2['n']} (leave-one-out sonrasi tarihsel veri kalmadigi icin "
+              f"{b2_skipped_no_history} ornek atlandi)")
         print(f"  MAE  = {m2['mae_sec']:.1f} sn ({m2['mae_sec']/60:.2f} dk)")
         print(f"  RMSE = {m2['rmse_sec']:.1f} sn ({m2['rmse_sec']/60:.2f} dk)")
         print(f"  +-2 dakika icinde dogru: %{m2['within_2min_pct']:.1f}")
+    else:
+        print(f"  Hicbir segmentte leave-one-out sonrasi tarihsel veri kalmadi "
+              f"({b2_skipped_no_history} ornegin tumu atlandi) - baseline uretilemedi. "
+              f"Bu, veri setinin kucuklugunun (cogu segmentte n=1) dogrudan bir sonucu.")
 
-    print("\nSegment basina ornek sayisi (kucuk n = guvenilmez medyan):")
+    print("\nSegment basina ornek sayisi (kucuk n = leave-one-out'ta veri kalmayabilir):")
     for key, count in sorted(segment_sample_counts.items()):
-        flag = "  <-- DUSUK ORNEK SAYISI" if count < 5 else ""
+        flag = "  <-- n=1: leave-one-out'ta bu segment icin HICBIR tahmin uretilemez" if count < 2 else ""
         print(f"  Hat {key[0]}, Yon {key[1]}, Durak_pk {key[2]}: n={count}{flag}")
 
     print("\n" + "=" * 60)
-    print("SINIRLAMALAR (acikca raporlaniyor, sonuclar degistirilmedi)")
+    print("SINIRLAMALAR")
     print("=" * 60)
-    print("- Veri seti kucuk (60 dk / 12 arac / 94 ornek) - bu sonuclar")
-    print("  ISTATISTIKSEL OLARAK GUVENILIR DEGIL, sadece pipeline'in uctan")
-    print("  uca calistigini gostermek icin bir ilk deneme.")
-    print("- Baseline 2, segment medyanini hesaplarken kendi test ornegini")
-    print("  disarida birakmiyor (leave-one-out degil) - bu, gercek")
-    print("  performansi OLDUGUNDAN IYI gosteriyor olabilir.")
-    print("- label_quality dagilimi kontrol edilmeli; SILVER/REJECTED")
-    print("  agirlikli bir set GOLD orneklerden daha az guvenilir sonuc verir.")
+    print("- Veri seti kucuk - bu sonuclar istatistiksel olarak guvenilir degil,")
+    print("  pipeline'in uctan uca calistigini gostermek icin bir ilk deneme.")
+    print("- Baseline 2 artik leave-one-out uyguluyor: bir ornegin kendi degeri")
+    print("  kendi tahminine KATILMIYOR. n=1 olan segmentlerde tahmin uretilemiyor")
+    print("  (uydurma deger verilmiyor, ornek atlanip acikca raporlaniyor).")
+    print("- Faz 3'te asil degerlendirme train/test ayrimiyla yapilacak; bu script")
+    print("  sadece Faz 2 kapsaminda 'ayni ornegi kendi tahmininde kullanmama'")
+    print("  minimum kuralini saglar.")
 
     return m1, m2
 

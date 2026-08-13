@@ -11,3 +11,4 @@ data/processed/
 .pytest_cache/
 .vscode/
 .DS_Store
+CLAUDE.md
