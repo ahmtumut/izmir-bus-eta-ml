@@ -2,10 +2,9 @@
 
 **Tarih:** 17 Ağustos 2026
 **Repository:** https://github.com/ahmtumut/izmir-bus-eta-ml
-**Bu rapor yazıldığı andaki HEAD:** `cd7e8df399ec5d4b0b1c505c4584dc0d8867e4d5`
-(Faz 3 çalışması bu commit'ten sonra yapıldı, henüz commit edilmedi -
-detaylar için `git status`; kullanıcı commit'lemeye karar verdiğinde bu
-rapor güncel final SHA ile revize edilmeli)
+**Final commit SHA:** `e7414b8337dba8180416437655e8d06d693f017f`
+(Faz 3 çalışmasının tamamı - kod, migration, model dosyaları, rapor
+dosyaları - bu commit'te)
 
 Bu doküman, CLAUDE.md'nin Faz 3 kabul kriterinde istenen tüm kalemleri
 tek bir yerde toplar. Ayrıntılı keşif/hata-ayıklama süreci (v1→v3
