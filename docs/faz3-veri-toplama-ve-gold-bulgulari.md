@@ -504,10 +504,15 @@ tutarlı:
 5. **SHAP analizi** - henüz yapılmadı, sırada.
 6. Final rapor (repo/commit SHA, veri toplama özeti, tüm bulgular,
    sonuçlar, seçilen model gerekçesi) - henüz yazılmadı.
-7. `app/ml/` pipeline dosyaları: `__init__.py`, `dataset.py`,
+7. ~~`inference.py`~~ - yazıldı, tek arac/durak için canlı tahmin
+   üretiyor. Test sırasında önemli bir sınırlama bulundu: model sadece
+   `distance_remaining_m <= ~3200m` için güvenilir (COARSE_APPROACH_WINDOW_M
+   nedeniyle train setinin doğal sınırı) - bunun dışında sorgulanırsa
+   fiziksel olarak anlamsız sonuç üretebiliyor, script artık bunu
+   tespit edip uyarıyor. Detay: `docs/faz3-final-raporu.md` madde 12.
+8. `app/ml/` pipeline dosyaları TAMAM: `__init__.py`, `dataset.py`,
    `features.py`, `split.py`, `evaluate.py`, `baselines.py`,
-   `train_xgboost.py`, `train_catboost.py` mevcut. `inference.py`
-   henüz yazılmadı.
+   `train_xgboost.py`, `train_catboost.py`, `explain.py`, `inference.py`.
 
 **Kalan bilinen sınırlamalar:** (a) 20dk+ ETA'lar dataset'te az temsil
 ediliyor (test'te 4 satır) - bu aralıkta model güvenilir değil; (b)

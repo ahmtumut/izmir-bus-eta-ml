@@ -247,12 +247,32 @@ Gerekçe (tek bir skora değil, birlikte değerlendirilen kriterlere göre):
 - Response-içi ID çakışması (Bulgu 2) için sistematik bir tarama
   yapılmadı, sadece 1 vaka bulunup düzeltildi - kapsamı tam bilinmiyor.
 
-## 12. Tekrarlanabilirlik
+## 12. Inference (`app/ml/inference.py`)
+
+Kaydedilmiş final model (CatBoost) ile canlı tahmin üreten script.
+`vehicle_id` + `line_no` + `target_stop_id` verilince, aracın **en son
+bilinen** GOOD/DEGRADED gözlemini T0 kabul edip (gerçek deployment
+senaryosu - "şu an için tahmin üret"), `features.py` ile birebir aynı
+sorgu/pencere mantığıyla tüm feature'ları canlı hesaplar ve tahmini
+saniye/dakika cinsinden basar.
+
+**Test sırasında önemli bir sınırlama bulundu:** `COARSE_APPROACH_WINDOW_M=3000`
+nedeniyle train setinde `distance_remaining_m` hiçbir zaman ~3200m'yi
+geçmiyor. Model bu aralığın dışında hiç örnek görmedi - kasıtlı olarak
+26km uzaklıktaki bir durak sorulduğunda model **fiziksel olarak imkânsız**
+bir tahmin üretti (5.8dk → ~270km/h gerektirir). Makul bir mesafede
+(2121m) test edilince tahmin tutarlıydı (4.6dk → ~28km/h, gerçekçi otobüs
+hızı). `inference.py`'ye bu durumu tespit edip açıkça uyaran bir kontrol
+eklendi (`TRAINING_MAX_DISTANCE_REMAINING_M`) - **model sadece durağa
+~3km'den yakın T0'lar için güvenilir**, bu inference katmanında
+belgelenmiş bir kullanım sınırı.
+
+## 13. Tekrarlanabilirlik
 
 `app/ml/` pipeline: `dataset.py`, `features.py`, `split.py`,
 `evaluate.py`, `baselines.py`, `train_xgboost.py`, `train_catboost.py`,
-`explain.py`. Migration `008_dataset_split.sql` ile `dataset_split`
-kolonu eklendi.
+`explain.py`, `inference.py`. Migration `008_dataset_split.sql` ile
+`dataset_split` kolonu eklendi.
 
 Artifact'ler:
 - `models/xgboost_eta_model.json`, `models/catboost_eta_model.cbm`
