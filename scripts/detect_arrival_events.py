@@ -27,7 +27,16 @@ from app.storage import db_storage
 PROXIMITY_M = 50
 COLLECTOR_INTERVAL_SECONDS = 60
 MIN_TREND_POINTS = 3
-COARSE_APPROACH_WINDOW_M = PROXIMITY_M * 4
+# Faz 3 duzeltmesi (supervisor talebi): eski deger PROXIMITY_M*4=200m idi.
+# Bu, T0 adaylarinin (fetch_t0_candidates, generate_eta_training_samples.py)
+# neredeyse tamami 0-5dk ETA araliginda kalmasina yol aciyordu (200m, otobus
+# hizinda ~20-40sn) - egitim setinin %90.5'i 0-5dk'ydi, model uzun ETA'lari
+# hic ogrenemedi. 3000m'ye cikarildi - gercekci orta/uzun ETA'li T0 adaylari
+# uretebilmek icin. Risk: genis pencere, Bulgu 4'teki round-trip artifact'lerini
+# (bkz. docs/faz3-veri-toplama-ve-gold-bulgulari.md) daha sik tetikleyebilir -
+# bu yuzden dataset'te ayni 1800sn post-hoc filtre AYNEN korunmali/tekrar
+# uygulanmali.
+COARSE_APPROACH_WINDOW_M = 3000
 
 
 def fetch_target_stops(conn):

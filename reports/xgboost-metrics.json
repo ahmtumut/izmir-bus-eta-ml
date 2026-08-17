@@ -1,0 +1,211 @@
+{
+  "model_type": "XGBRegressor",
+  "training_date_utc": "2026-08-17T08:31:25.194412+00:00",
+  "git_commit_sha": "cd7e8df399ec5d4b0b1c505c4584dc0d8867e4d5",
+  "dataset_path": "data/processed/eta_features_20260817_v2.csv",
+  "dataset_sha256": "416f126ee7141cc407f201901ba2992e25f9e710d047fc93244554d0e3f84d13",
+  "feature_columns": [
+    "line_no",
+    "direction",
+    "target_stop_id",
+    "distance_remaining_m",
+    "progress_along_route",
+    "recent_speed_mps",
+    "hour_of_day",
+    "day_of_week",
+    "distance_to_route_m",
+    "time_since_previous_obs_s",
+    "speed_avg_last3_mps",
+    "speed_std_last3_mps",
+    "speed_avg_5min_mps"
+  ],
+  "target_column": "actual_eta_seconds",
+  "best_hyperparameters": {
+    "subsample": 1.0,
+    "reg_lambda": 2,
+    "min_child_weight": 5,
+    "max_depth": 4,
+    "learning_rate": 0.1,
+    "colsample_bytree": 1.0
+  },
+  "best_iteration": 124,
+  "search_candidates_evaluated": 20,
+  "search_seconds": 29.286002,
+  "final_train_seconds": 0.537792,
+  "inference_seconds_per_row": 2.2966855295068716e-06,
+  "n_jobs": 12,
+  "device": "cpu",
+  "tree_method": "hist",
+  "split_sizes": {
+    "train": 9891,
+    "validation": 3060,
+    "test": 2474
+  },
+  "split_date_ranges": {
+    "train": {
+      "min": "2026-08-12 08:58:01.048704+00:00",
+      "max": "2026-08-14 12:41:26.988547+00:00"
+    },
+    "validation": {
+      "min": "2026-08-14 12:07:48.409761+00:00",
+      "max": "2026-08-17 06:41:27.100667+00:00"
+    },
+    "test": {
+      "min": "2026-08-16 11:42:27.211852+00:00",
+      "max": "2026-08-17 07:31:39.160742+00:00"
+    }
+  },
+  "metrics": {
+    "train": {
+      "n": 9891,
+      "mae_min": 0.6476072087515149,
+      "rmse_min": 0.9650880146651243,
+      "median_ae_min": 0.43945374067382836,
+      "within_1min_pct": 80.60863411181882,
+      "within_2min_pct": 95.29875644525326,
+      "within_3min_pct": 98.75644525326054
+    },
+    "validation": {
+      "n": 3060,
+      "mae_min": 1.453502163850472,
+      "rmse_min": 2.341552067940314,
+      "median_ae_min": 0.893856430086263,
+      "within_1min_pct": 53.75816993464052,
+      "within_2min_pct": 78.03921568627452,
+      "within_3min_pct": 87.3529411764706
+    },
+    "test": {
+      "n": 2474,
+      "mae_min": 1.4495465208556586,
+      "rmse_min": 2.2799778766100807,
+      "median_ae_min": 0.9741794347045896,
+      "within_1min_pct": 50.970088924818114,
+      "within_2min_pct": 78.09215844785771,
+      "within_3min_pct": 88.31851253031527
+    }
+  },
+  "test_breakdowns": {
+    "line_no": {
+      "121": {
+        "n": 673,
+        "mae_min": 1.2355677468524662,
+        "rmse_min": 1.6974488630093931,
+        "median_ae_min": 0.9079810381510416,
+        "within_1min_pct": 54.38335809806835,
+        "within_2min_pct": 80.83209509658246,
+        "within_3min_pct": 91.53046062407132
+      },
+      "515": {
+        "n": 1629,
+        "mae_min": 1.569523363076011,
+        "rmse_min": 2.550298581295493,
+        "median_ae_min": 1.0008764017903644,
+        "within_1min_pct": 49.96930632289748,
+        "within_2min_pct": 76.05893186003682,
+        "within_3min_pct": 85.88090853284224
+      },
+      "761": {
+        "n": 172,
+        "mae_min": 1.1505083750835328,
+        "rmse_min": 1.3775650922017766,
+        "median_ae_min": 1.0477782541829428,
+        "within_1min_pct": 47.093023255813954,
+        "within_2min_pct": 86.62790697674419,
+        "within_3min_pct": 98.83720930232558
+      }
+    },
+    "direction": {
+      "0": {
+        "n": 1378,
+        "mae_min": 1.591553314047324,
+        "rmse_min": 2.167617053520158,
+        "median_ae_min": 1.0817826229980472,
+        "within_1min_pct": 47.24238026124819,
+        "within_2min_pct": 71.69811320754717,
+        "within_3min_pct": 83.16400580551525
+      },
+      "1": {
+        "n": 1096,
+        "mae_min": 1.2710014834303713,
+        "rmse_min": 2.413838458882244,
+        "median_ae_min": 0.8714039709716799,
+        "within_1min_pct": 55.65693430656934,
+        "within_2min_pct": 86.13138686131386,
+        "within_3min_pct": 94.7992700729927
+      }
+    },
+    "eta_range": {
+      "0-5dk": {
+        "n": 1597,
+        "mae_min": 1.015294064955124,
+        "rmse_min": 1.3821555816251199,
+        "median_ae_min": 0.7304126251057944,
+        "within_1min_pct": 62.74264245460238,
+        "within_2min_pct": 87.03819661866,
+        "within_3min_pct": 95.11584220413275
+      },
+      "10-20dk": {
+        "n": 51,
+        "mae_min": 5.583823715832759,
+        "rmse_min": 8.361749804395087,
+        "median_ae_min": 2.1360736003906258,
+        "within_1min_pct": 11.76470588235294,
+        "within_2min_pct": 45.09803921568628,
+        "within_3min_pct": 56.86274509803921
+      },
+      "20+dk": {
+        "n": 4,
+        "mae_min": 16.2317450235555,
+        "rmse_min": 16.23612217201498,
+        "median_ae_min": 16.13867346746419,
+        "within_1min_pct": 0.0,
+        "within_2min_pct": 0.0,
+        "within_3min_pct": 0.0
+      },
+      "5-10dk": {
+        "n": 822,
+        "mae_min": 1.964782823919554,
+        "rmse_min": 2.5126076485315885,
+        "median_ae_min": 1.5142495843424473,
+        "within_1min_pct": 30.77858880778589,
+        "within_2min_pct": 63.138686131386855,
+        "within_3min_pct": 77.49391727493918
+      }
+    },
+    "label_quality": {
+      "GOLD": {
+        "n": 84,
+        "mae_min": 1.662417486899288,
+        "rmse_min": 2.458372702185788,
+        "median_ae_min": 1.0380729313557937,
+        "within_1min_pct": 46.42857142857143,
+        "within_2min_pct": 73.80952380952381,
+        "within_3min_pct": 82.14285714285714
+      },
+      "SILVER": {
+        "n": 2390,
+        "mae_min": 1.4420648634716984,
+        "rmse_min": 2.2734533042618517,
+        "median_ae_min": 0.9732479769449871,
+        "within_1min_pct": 51.12970711297071,
+        "within_2min_pct": 78.24267782426779,
+        "within_3min_pct": 88.53556485355648
+      }
+    }
+  },
+  "feature_importance": {
+    "distance_remaining_m": 0.5756492614746094,
+    "target_stop_id": 0.10680735856294632,
+    "progress_along_route": 0.061565570533275604,
+    "line_no": 0.0556999035179615,
+    "distance_to_route_m": 0.04406072571873665,
+    "direction": 0.031632207334041595,
+    "speed_avg_last3_mps": 0.021641630679368973,
+    "hour_of_day": 0.019984068349003792,
+    "speed_avg_5min_mps": 0.019111627712845802,
+    "day_of_week": 0.017170201987028122,
+    "speed_std_last3_mps": 0.0170701052993536,
+    "time_since_previous_obs_s": 0.01674308441579342,
+    "recent_speed_mps": 0.012864252552390099
+  }
+}

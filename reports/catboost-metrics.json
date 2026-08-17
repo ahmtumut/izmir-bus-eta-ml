@@ -1,0 +1,214 @@
+{
+  "model_type": "CatBoostRegressor",
+  "training_date_utc": "2026-08-17T08:35:49.387600+00:00",
+  "git_commit_sha": "cd7e8df399ec5d4b0b1c505c4584dc0d8867e4d5",
+  "dataset_path": "data/processed/eta_features_20260817_v2.csv",
+  "dataset_sha256": "416f126ee7141cc407f201901ba2992e25f9e710d047fc93244554d0e3f84d13",
+  "feature_columns": [
+    "line_no",
+    "direction",
+    "target_stop_id",
+    "distance_remaining_m",
+    "progress_along_route",
+    "recent_speed_mps",
+    "hour_of_day",
+    "day_of_week",
+    "distance_to_route_m",
+    "time_since_previous_obs_s",
+    "speed_avg_last3_mps",
+    "speed_std_last3_mps",
+    "speed_avg_5min_mps"
+  ],
+  "categorical_features": [
+    "line_no",
+    "direction",
+    "target_stop_id"
+  ],
+  "target_column": "actual_eta_seconds",
+  "best_hyperparameters": {
+    "subsample": 0.9,
+    "random_strength": 0.5,
+    "learning_rate": 0.1,
+    "l2_leaf_reg": 5,
+    "depth": 4
+  },
+  "best_iteration": 504,
+  "search_candidates_evaluated": 20,
+  "search_seconds": 240.598556,
+  "final_train_seconds": 8.595302,
+  "inference_seconds_per_row": 6.313662085691188e-07,
+  "n_jobs": 12,
+  "device": "cpu",
+  "split_sizes": {
+    "train": 9891,
+    "validation": 3060,
+    "test": 2474
+  },
+  "split_date_ranges": {
+    "train": {
+      "min": "2026-08-12 08:58:01.048704+00:00",
+      "max": "2026-08-14 12:41:26.988547+00:00"
+    },
+    "validation": {
+      "min": "2026-08-14 12:07:48.409761+00:00",
+      "max": "2026-08-17 06:41:27.100667+00:00"
+    },
+    "test": {
+      "min": "2026-08-16 11:42:27.211852+00:00",
+      "max": "2026-08-17 07:31:39.160742+00:00"
+    }
+  },
+  "metrics": {
+    "train": {
+      "n": 9891,
+      "mae_min": 0.79220004228457,
+      "rmse_min": 1.3577237964031852,
+      "median_ae_min": 0.47578728466473486,
+      "within_1min_pct": 75.84672934991407,
+      "within_2min_pct": 92.4274593064402,
+      "within_3min_pct": 96.56253159437873
+    },
+    "validation": {
+      "n": 3060,
+      "mae_min": 1.4802128544004967,
+      "rmse_min": 2.3789423358144943,
+      "median_ae_min": 0.9029474441251213,
+      "within_1min_pct": 53.790849673202615,
+      "within_2min_pct": 77.45098039215686,
+      "within_3min_pct": 87.77777777777777
+    },
+    "test": {
+      "n": 2474,
+      "mae_min": 1.2967146312514084,
+      "rmse_min": 2.1065831481223496,
+      "median_ae_min": 0.8545562103459159,
+      "within_1min_pct": 56.26515763945028,
+      "within_2min_pct": 80.19401778496362,
+      "within_3min_pct": 91.43088116410671
+    }
+  },
+  "test_breakdowns": {
+    "line_no": {
+      "121": {
+        "n": 673,
+        "mae_min": 1.0012682244986226,
+        "rmse_min": 1.3915212152769443,
+        "median_ae_min": 0.7721663921655697,
+        "within_1min_pct": 60.77265973254086,
+        "within_2min_pct": 87.66716196136701,
+        "within_3min_pct": 96.73105497771174
+      },
+      "515": {
+        "n": 1629,
+        "mae_min": 1.4716541341611304,
+        "rmse_min": 2.4123304338933282,
+        "median_ae_min": 0.9431989022280254,
+        "within_1min_pct": 52.48618784530387,
+        "within_2min_pct": 75.87476979742172,
+        "within_3min_pct": 88.64333947206875
+      },
+      "761": {
+        "n": 172,
+        "mae_min": 0.7958947562786579,
+        "rmse_min": 1.0674862675985783,
+        "median_ae_min": 0.5977461733628753,
+        "within_1min_pct": 74.4186046511628,
+        "within_2min_pct": 91.86046511627907,
+        "within_3min_pct": 97.09302325581395
+      }
+    },
+    "direction": {
+      "0": {
+        "n": 1378,
+        "mae_min": 1.3717374643634364,
+        "rmse_min": 1.8913191169297632,
+        "median_ae_min": 0.9094911994067597,
+        "within_1min_pct": 52.75761973875181,
+        "within_2min_pct": 75.25399129172715,
+        "within_3min_pct": 87.37300435413643
+      },
+      "1": {
+        "n": 1096,
+        "mae_min": 1.2023884779408474,
+        "rmse_min": 2.3494105734010207,
+        "median_ae_min": 0.7903794369635693,
+        "within_1min_pct": 60.67518248175182,
+        "within_2min_pct": 86.40510948905109,
+        "within_3min_pct": 96.53284671532847
+      }
+    },
+    "eta_range": {
+      "0-5dk": {
+        "n": 1597,
+        "mae_min": 0.8908770614903526,
+        "rmse_min": 1.2390129731715436,
+        "median_ae_min": 0.6490681814633863,
+        "within_1min_pct": 68.69129618033813,
+        "within_2min_pct": 89.48027551659361,
+        "within_3min_pct": 97.05698184095178
+      },
+      "10-20dk": {
+        "n": 51,
+        "mae_min": 5.346359404392704,
+        "rmse_min": 8.161091144125283,
+        "median_ae_min": 2.496412495224032,
+        "within_1min_pct": 19.607843137254903,
+        "within_2min_pct": 43.13725490196079,
+        "within_3min_pct": 54.90196078431373
+      },
+      "20+dk": {
+        "n": 4,
+        "mae_min": 16.54405834233333,
+        "rmse_min": 16.546341590570563,
+        "median_ae_min": 16.553462785708238,
+        "within_1min_pct": 0.0,
+        "within_2min_pct": 0.0,
+        "within_3min_pct": 0.0
+      },
+      "5-10dk": {
+        "n": 822,
+        "mae_min": 1.7597332938230286,
+        "rmse_min": 2.215657700199606,
+        "median_ae_min": 1.4380788946305079,
+        "within_1min_pct": 34.67153284671533,
+        "within_2min_pct": 64.84184914841849,
+        "within_3min_pct": 83.21167883211679
+      }
+    },
+    "label_quality": {
+      "GOLD": {
+        "n": 84,
+        "mae_min": 1.2505743192445022,
+        "rmse_min": 1.7111291861949542,
+        "median_ae_min": 0.8187510466558157,
+        "within_1min_pct": 58.333333333333336,
+        "within_2min_pct": 75.0,
+        "within_3min_pct": 91.66666666666666
+      },
+      "SILVER": {
+        "n": 2390,
+        "mae_min": 1.298336299121107,
+        "rmse_min": 2.1191399626797214,
+        "median_ae_min": 0.8593852650392677,
+        "within_1min_pct": 56.19246861924686,
+        "within_2min_pct": 80.3765690376569,
+        "within_3min_pct": 91.42259414225941
+      }
+    }
+  },
+  "feature_importance": {
+    "distance_remaining_m": 38.26711050981797,
+    "progress_along_route": 19.145030805329633,
+    "target_stop_id": 12.82048951819113,
+    "speed_avg_5min_mps": 6.348207702013334,
+    "distance_to_route_m": 5.482101532330834,
+    "line_no": 4.726990988757599,
+    "speed_avg_last3_mps": 4.293156043143111,
+    "hour_of_day": 2.3545443522225717,
+    "recent_speed_mps": 2.0164315197247493,
+    "speed_std_last3_mps": 1.8037047992542954,
+    "time_since_previous_obs_s": 1.457682425732209,
+    "day_of_week": 0.8691303565732044,
+    "direction": 0.4154194469093608
+  }
+}

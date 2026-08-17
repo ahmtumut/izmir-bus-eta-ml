@@ -12,3 +12,4 @@ data/processed/
 .vscode/
 .DS_Store
 CLAUDE.md
+catboost_info/

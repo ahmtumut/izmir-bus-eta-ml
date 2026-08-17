@@ -1,0 +1,33 @@
+{
+  "xgboost_mean_abs_shap_sec": {
+    "distance_remaining_m": 134.46644592285156,
+    "target_stop_id": 66.65825653076172,
+    "progress_along_route": 18.930818557739258,
+    "hour_of_day": 11.175725936889648,
+    "distance_to_route_m": 3.871908187866211,
+    "speed_avg_5min_mps": 3.5043463706970215,
+    "day_of_week": 3.1890413761138916,
+    "speed_avg_last3_mps": 2.7656474113464355,
+    "speed_std_last3_mps": 2.7119054794311523,
+    "recent_speed_mps": 2.340559482574463,
+    "time_since_previous_obs_s": 1.961116909980774,
+    "direction": 1.4942994117736816,
+    "line_no": 0.1563667505979538
+  },
+  "catboost_mean_abs_shap_sec": {
+    "distance_remaining_m": 133.93085505220236,
+    "target_stop_id": 45.097939884043825,
+    "progress_along_route": 27.947985550408376,
+    "hour_of_day": 10.480841678167625,
+    "speed_avg_5min_mps": 8.23980135492588,
+    "line_no": 8.17114815224449,
+    "recent_speed_mps": 5.1536646038178455,
+    "speed_avg_last3_mps": 4.94734059399279,
+    "day_of_week": 4.560506164671193,
+    "distance_to_route_m": 3.296039671543648,
+    "speed_std_last3_mps": 2.9727691234820193,
+    "time_since_previous_obs_s": 1.8750828414567406,
+    "direction": 1.8060101488601126
+  },
+  "test_n": 2474
+}
