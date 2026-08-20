@@ -3,15 +3,15 @@
 **Tarih:** 20 Ağustos 2026
 **Repository:** https://github.com/ahmtumut/izmir-bus-eta-ml
 **Faz 1-3 son commit (SHA):** `75bccceae06eca8b27b0589025767a0f2fd687b8` ("Faz 3: inference.py eklendi, pipeline tamamlandı")
+**Faz 4 commit (SHA):** `7453ef3` ("Faz 4: canlı/replay 3D web görselleştirme (MapLibre+Three.js) + MLOps eklentileri")
 **Not:** Faz 2/3 kapanış raporlarında geçen SHA'lar (`c0efcd806...`, `e7414b833...`) 40 hex karakterden uzun görünüyor,
 muhtemelen dokümantasyon sırasında transkripsiyon hatası — bu rapor `git log`'dan doğrudan alınan güncel SHA'yı esas alır.
 
-> ⚠️ **Önemli — repo durumu:** Bu raporun hazırlandığı anda, plansız/ek olarak yapılan Faz 4 çalışması
-> (`web/`, `app/api/`, `scripts/run_collector_supervisor.py`, `app/ml/ablation_vehicle_id.py`,
-> `scripts/import_gtfs_route_shapes.py` ve `app/ml/features.py`, `app/ml/inference.py`,
-> `scripts/detect_arrival_events.py`, `scripts/map_match_observations.py`, `scripts/run_dual_collector.py`
-> üzerindeki değişiklikler) **henüz commit edilmemiş**, çalışma ağacında bekliyor. Faz 1-3 için repo/SHA
-> bilgisi güncel ve doğrudur; Faz 4 bölümü kod incelemesine dayanır, ayrı bir commit olarak işlenmelidir.
+> ✅ **Repo durumu güncellendi:** Faz 4 çalışması (`web/`, `app/api/`, `scripts/run_collector_supervisor.py`,
+> `app/ml/ablation_vehicle_id.py`, `scripts/import_gtfs_route_shapes.py` ve `app/ml/features.py`,
+> `app/ml/inference.py`, `scripts/detect_arrival_events.py`, `scripts/map_match_observations.py`,
+> `scripts/run_dual_collector.py` üzerindeki değişiklikler) `7453ef3` commit'iyle repoya işlendi.
+> Bu nedenle repo HEAD'i artık hem Faz 1-3 hem Faz 4'ü yansıtıyor.
 
 ---
 
@@ -31,7 +31,7 @@ ama kullanıcı isteğiyle eklenen bir Faz 4 (Three.js/MapLibre görselleştirme
 | Faz 2 | PostGIS, map-matching, arrival event, ETA ground-truth | ✅ Tamamlandı |
 | Faz 2 Kapanış | 5 düzeltme maddesi | ✅ Tamamlandı |
 | Faz 3 | Veri büyütme + XGBoost/CatBoost ETA modeli | ✅ Tamamlandı |
-| Faz 4 (plan dışı) | Canlı/replay 3D web görselleştirme, MLOps eklentileri | ⚠️ Kod tamam, **commit edilmedi** |
+| Faz 4 (plan dışı) | Canlı/replay 3D web görselleştirme, MLOps eklentileri | ✅ Tamamlandı, commit `7453ef3` |
 
 ---
 
@@ -209,8 +209,8 @@ saklanıyor. Migration 008 ile `dataset_split` kolonu eklendi.
 ## 5. Faz 4 (plan dışı) — Canlı/Replay 3D Web Görselleştirmesi
 
 Bu faz orijinal görev tanımının **parçası değildi**; kullanıcının bu oturumda ayrıca istediği "projeyi
-Three.js ile görselleştir" talebiyle başladı ve kapsamı iteratif olarak netleşti. **Kod tamamlanmış
-durumda ama henüz git'e commit edilmemiş** — bu bölüm dosya incelemesine dayanıyor.
+Three.js ile görselleştir" talebiyle başladı ve kapsamı iteratif olarak netleşti. Kod tamamlandı ve
+`7453ef3` commit'iyle repoya işlendi.
 
 ### 5.1 Backend (`app/api/`)
 
@@ -245,16 +245,16 @@ paneli (son gözlem zamanı, hız sparkline, güven), mobil uyumlu responsive pa
 
 Faz 4'ün kapsamı bir plan dosyasında (`sprightly-sprouting-moth.md`) adım adım genişletildi (önce
 canlı map-matching kalıcılığı, sonra görsel cila, sonra analitik katman) — kullanıcı onayına dayalı,
-iteratif ilerleyen bir çalışma tarzıydı, resmi bir kabul kriteri seti yoktu. Bu nedenle Faz 4 "tamamlandı"
-diye kesin bir iddia yerine "işlevsel ve test edilmiş, ama commit edilmemiş" olarak raporlanıyor.
+iteratif ilerleyen bir çalışma tarzıydı, resmi bir kabul kriteri seti yoktu. Kod `7453ef3` ile commit
+edildi; ancak Faz 1-3'teki gibi resmi bir "kapanış raporu" (ayrı doküman) henüz yazılmadı — bu rapor o
+işlevi de üstleniyor.
 
 ---
 
 ## 6. Genel Açık Riskler ve Sınırlamalar (tüm fazlar)
 
-1. **Faz 4 kodu commit edilmedi** — repo'nun mevcut HEAD'i (`75bccce`) Faz 4'ü yansıtmıyor. Rapor/SHA
-   bütünlüğü için önce bu değişikliklerin commit edilmesi (ve muhtemelen ayrı bir "Faz 4" kapanış
-   raporu yazılması) önerilir.
+1. **Faz 4 için ayrı bir resmi kapanış raporu yok** — kod `7453ef3` ile commit edildi ve repo HEAD'i
+   artık Faz 4'ü yansıtıyor, ama Faz 1-3'teki gibi ayrı bir kapanış dokümanı henüz yazılmadı.
 2. **Akşam yoğun saat ve Cumartesi verisi hiç toplanmadı** — model bu koşullar için doğrulanmadı.
 3. **`distance_remaining_m` >3200m aralığında model güvenilir değil** (COARSE_APPROACH_WINDOW_M kısıtı) —
    `inference.py` bunu açıkça flag'liyor, sessizce yanlış tahmin üretmiyor.
@@ -280,7 +280,7 @@ katmanı ve destekleyici MLOps araçları (collector supervisor, ablation testi,
 geliştirildi.
 
 **Önerilen sıradaki adımlar:**
-1. Faz 4 çalışma ağacındaki değişiklikleri gözden geçirip commit etmek (kullanıcı onayıyla).
+1. Faz 4 için ayrı, resmi bir kapanış raporu yazmak (Faz 1-3 formatına uygun).
 2. Eksik zaman dilimlerini (akşam yoğun saat, Cumartesi) kapsayan ek bir veri toplama turu.
 3. `ablation-vehicle-id.json` sonucunu okuyup Faz 3 raporuna resmi olarak eklemek.
 4. GPS freeze hipotezini doğrulamak için hedefli bir inceleme (Faz 1'den beri açık).
