@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>İzmir Otobüs ETA — GPS Replay</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="map"></div>
+  <button id="view-toggle-btn" title="2D/3D görünüm arasında geçiş yap">🏙️ 3D Göster</button>
+  <div id="panel">
+    <h1>İzmir Otobüs ETA — GPS Replay</h1>
+    <a href="/dashboard.html" style="font-size:12px;">Model performans dashboard'u →</a>
+
+    <div class="field mode-tabs">
+      <button id="mode-replay-btn" class="mode-tab active">📼 Replay</button>
+      <button id="mode-live-btn" class="mode-tab">🔴 Canlı</button>
+    </div>
+
+    <div id="replay-controls">
+      <div class="field">
+        <label for="session-select">Toplama oturumu</label>
+        <select id="session-select"></select>
+      </div>
+
+      <div class="field checkboxes" id="line-checkboxes">
+        <label><input type="checkbox" value="515" checked /> 515</label>
+        <label><input type="checkbox" value="121" checked /> 121</label>
+        <label><input type="checkbox" value="761" checked /> 761</label>
+      </div>
+
+      <button id="load-btn">Veriyi Yükle</button>
+
+      <div class="field" id="transport-controls" hidden>
+        <div class="transport-row">
+          <button id="play-btn">▶ Oynat</button>
+          <select id="speed-select">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="2">2x</option>
+            <option value="5">5x</option>
+            <option value="20">20x</option>
+            <option value="60">60x</option>
+          </select>
+        </div>
+        <div id="scrubber-wrap">
+          <input type="range" id="scrubber" min="0" max="1000" value="0" />
+          <div id="scrubber-ticks"></div>
+        </div>
+        <div id="clock">--:--:--</div>
+      </div>
+    </div>
+
+    <div id="live-controls" hidden>
+      <div class="field checkboxes" id="live-line-checkboxes">
+        <label><input type="checkbox" value="515" checked /> 515</label>
+        <label><input type="checkbox" value="121" checked /> 121</label>
+        <label><input type="checkbox" value="761" checked /> 761</label>
+      </div>
+      <div id="live-status">durum kontrol ediliyor...</div>
+    </div>
+
+    <div class="field">
+      <label><input type="checkbox" id="eta-toggle" checked /> ETA tahminlerini göster (CatBoost, yavaşlatabilir)</label>
+    </div>
+
+    <div id="legend">
+      <div><span class="dot good"></span> GOOD</div>
+      <div><span class="dot degraded"></span> DEGRADED</div>
+      <div><span class="dot rejected"></span> REJECTED (görsel amaçlı, modele dahil değil)</div>
+      <div><span class="dot arrival"></span> Arrival event</div>
+    </div>
+
+    <div id="status"></div>
+
+    <div style="font-size:10px;color:#999;margin-top:8px;">
+      Otobüs modeli: "Isuzu Erga Mio bus" by
+      <a href="https://sketchfab.com/own.guest" target="_blank" rel="noopener">own.guest</a>
+      (<a href="https://sketchfab.com/3d-models/isuzu-erga-mio-bus-050e8acd0bbc4da0902a8a874ef10fca" target="_blank" rel="noopener">Sketchfab</a>),
+      <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY-4.0</a>
+    </div>
+  </div>
+
+  <div id="eta-table-panel" hidden>
+    <h2>Canlı ETA Tahminleri</h2>
+    <table id="eta-table">
+      <thead>
+        <tr><th>Araç</th><th>Hat</th><th>Durak</th><th>ETA</th></tr>
+      </thead>
+      <tbody id="eta-table-body"></tbody>
+    </table>
+  </div>
+
+  <div id="vehicle-detail-panel" hidden>
+    <button id="vehicle-detail-close" aria-label="Kapat">×</button>
+    <h2>Araç Detayı</h2>
+    <div id="vehicle-detail-body"></div>
+    <button id="vehicle-follow-btn">📍 Bu aracı takip et</button>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

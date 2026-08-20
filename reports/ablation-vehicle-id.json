@@ -1,0 +1,53 @@
+{
+  "generated_at_utc": "2026-08-20T11:07:09.127774+00:00",
+  "hyperparameters_used": {
+    "subsample": 0.9,
+    "random_strength": 0.5,
+    "learning_rate": 0.1,
+    "l2_leaf_reg": 5,
+    "depth": 4
+  },
+  "baseline_test_metrics_no_vehicle_id": {
+    "n": 2474,
+    "mae_min": 1.2967146312514084,
+    "rmse_min": 2.1065831481223496,
+    "median_ae_min": 0.8545562103459159,
+    "within_1min_pct": 56.26515763945028,
+    "within_2min_pct": 80.19401778496362,
+    "within_3min_pct": 91.43088116410671
+  },
+  "ablation_test_metrics_with_vehicle_id": {
+    "n": 2474,
+    "mae_min": 1.0816103689840877,
+    "rmse_min": 1.8464972221746874,
+    "median_ae_min": 0.7517993999788586,
+    "within_1min_pct": 61.03476151980598,
+    "within_2min_pct": 87.22716248989491,
+    "within_3min_pct": 95.71544058205336
+  },
+  "mae_delta_min": -0.2151042622673207,
+  "mae_delta_pct": -16.58840403919342,
+  "verdict": "vehicle_id eklenince test MAE %16.6 DUSTU (onemli iyilesme). Bu, modelin kismen arac kimligine gore ezberleme yaptigina isaret ediyor olabilir - gercek dunyada YENI bir aracta bu avantaj iscisiz kalir. Mevcut 'vehicle_id disarida birakma' karari DOGRULANDI (feature'in katkisi cazip gorunse de guvenilir/genellenebilir degil).",
+  "ablation_feature_importance": {
+    "distance_remaining_m": 49.85097212787952,
+    "progress_along_route": 15.464192107706872,
+    "target_stop_id": 13.689258092007211,
+    "line_no": 5.12909592306966,
+    "recent_speed_mps": 4.78928789377596,
+    "distance_to_route_m": 2.4954368425464106,
+    "speed_avg_last3_mps": 2.4629151392500384,
+    "vehicle_id": 2.0832236161073423,
+    "speed_avg_5min_mps": 1.3722931924733934,
+    "speed_std_last3_mps": 0.7830353115455128,
+    "time_since_previous_obs_s": 0.5981172026351164,
+    "hour_of_day": 0.5110949396085607,
+    "day_of_week": 0.4021479399854773,
+    "direction": 0.368929671408951
+  },
+  "vehicle_id_importance_rank": 8,
+  "n_unique_vehicles_train": 35,
+  "n_unique_vehicles_test": 10,
+  "n_test_rows_vehicle_seen_in_train": 354,
+  "n_test_rows_total": 2474,
+  "train_seconds": 5.20999
+}

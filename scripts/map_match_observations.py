@@ -41,18 +41,24 @@ def quality_from_distance(distance_m: float) -> str:
     return "REJECTED"
 
 
-def fetch_observations(conn, run_id):
+def fetch_observations(conn, run_id, only_unmatched=False):
+    """only_unmatched=True: sadece map_match_quality IS NULL olan satirlar -
+    collector'in kendi dongusune gomulu periyodik cagrilar icin (Faz 4 canli
+    mod), her seferinde TUM run'i yeniden islemek yerine sadece o cycle'in
+    yeni satirlarini isler. CLI kullanimindaki varsayilan (False, tam
+    reprocessing) davranisi degismedi."""
+    query = """
+        SELECT vo.id, vo.line_no, vo.geom, vo.raw_lat, vo.raw_lon, vo.source_direction
+        FROM vehicle_observations vo
+        JOIN raw_snapshots rs ON vo.raw_snapshot_id = rs.id
+        WHERE rs.ingestion_run_id = %s
+    """
+    if only_unmatched:
+        query += " AND vo.map_match_quality IS NULL"
+    query += " ORDER BY vo.id"
+
     with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT vo.id, vo.line_no, vo.geom, vo.raw_lat, vo.raw_lon, vo.source_direction
-            FROM vehicle_observations vo
-            JOIN raw_snapshots rs ON vo.raw_snapshot_id = rs.id
-            WHERE rs.ingestion_run_id = %s
-            ORDER BY vo.id
-            """,
-            (run_id,),
-        )
+        cur.execute(query, (run_id,))
         return cur.fetchall()
 
 
@@ -114,8 +120,8 @@ def map_match_one(conn, geom_wkb, candidate_routes, source_direction):
     return (*source_result, flags)
 
 
-def run_map_matching(conn, run_id):
-    observations = fetch_observations(conn, run_id)
+def run_map_matching(conn, run_id, only_unmatched=False):
+    observations = fetch_observations(conn, run_id, only_unmatched=only_unmatched)
     print(f"{len(observations)} gozlem bulundu (run_id={run_id}).")
 
     route_cache = {}

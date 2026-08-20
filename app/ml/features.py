@@ -80,6 +80,55 @@ def fetch_base_rows(conn):
         return cols, cur.fetchall()
 
 
+def fetch_out_of_sample_rows(conn, limit: int = 3000):
+    """fetch_base_rows'un ayna fonksiyonu: dataset_split HENUZ ATANMAMIS
+    (train/val/test split'i DONDURULDUKTEN SONRA toplanan, modelin egitim/
+    dogrulama/test asamalarinda HIC GORMEDIGI) satirlari getirir. Gercek
+    zamanlı model performans izleme icin (bkz. app/api/model_metrics.py:
+    /api/model/live-performance) - modelin production'da, gercekten hic
+    gormedigi taze veride ne kadar iyi calistigini gosterir.
+
+    limit: build_*_feature_dataframe satir basina 2 ek DB sorgusu yapiyor
+    (compute_row_features) - binlerce satirda bu HTTP istegini yavaslatir,
+    bu yuzden EN YENI `limit` satirla sinirlandirilir (yine de "canli"
+    performansi temsil eder, hatta daha guncel oldugu icin daha iyi)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT ets.id, ets.arrival_event_id, ets.vehicle_id, ets.line_no,
+                   ets.direction, ets.target_stop_id, ets.source_observation_id,
+                   ets.observed_at, ets.actual_eta_seconds,
+                   ets.distance_remaining_m, ets.progress_along_route,
+                   ets.recent_speed_mps, ets.hour_of_day, ets.day_of_week,
+                   ets.label_quality, ets.dataset_split,
+                   vo.route_id, vo.distance_to_route_m
+            FROM eta_training_samples ets
+            JOIN vehicle_observations vo ON vo.id = ets.source_observation_id
+            WHERE ets.dataset_split IS NULL AND ets.label_quality != 'REJECTED'
+            ORDER BY ets.id DESC
+            LIMIT %s
+            """,
+            (limit,),
+        )
+        cols = [d.name for d in cur.description]
+        rows = cur.fetchall()
+        rows.reverse()  # kronolojik siraya geri cevir
+        return cols, rows
+
+
+def build_out_of_sample_feature_dataframe(conn) -> pd.DataFrame:
+    cols, rows = fetch_out_of_sample_rows(conn)
+    records = []
+    for row in rows:
+        base = dict(zip(cols, row))
+        engineered = compute_row_features(
+            conn, base["vehicle_id"], base["route_id"], base["observed_at"]
+        )
+        record = {**base, **engineered}
+        records.append(record)
+    return pd.DataFrame.from_records(records)
+
+
 def fetch_last_n_observations(conn, vehicle_id, route_id, t0, n=3):
     """T0'dan (dahil) geriye dogru, AYNI route_id + GOOD/DEGRADED + stale
     olmayan son n gozlemi zaman ARTAN sirayla dondurur. T0'in kendisi de

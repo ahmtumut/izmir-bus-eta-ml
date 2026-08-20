@@ -13,3 +13,4 @@ data/processed/
 .DS_Store
 CLAUDE.md
 catboost_info/
+node_modules/

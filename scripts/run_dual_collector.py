@@ -37,8 +37,9 @@ from app.collectors.bus_location_collector import collect_line, COLLECTOR_VERSIO
 from app.collectors.supporting_api_collector import (
     run_support_collector, run_gold_validation_collector, PILOT_LINE_STOPS,
 )
+from scripts.map_match_observations import run_map_matching
 
-CYCLE_INTERVAL_SECONDS = 60
+DEFAULT_CYCLE_INTERVAL_SECONDS = 60
 DELAY_BETWEEN_CALLS = 3
 
 # GOLD burst v3: support API (6 durak) ana GPS'ten bagimsiz, cok sik sorgulanir.
@@ -70,6 +71,11 @@ def run_gold_burst(conn, run_id: int, lines: list, burst_minutes: float):
                 result = collect_line(conn, run_id, line_no)
                 print(f"    [gold-main] Hat {line_no}: {result}")
                 time.sleep(GOLD_BURST_CALL_DELAY_SECONDS)
+            # Faz 4: canli mod (replay/live gorsellestirme) icin map-matching'i
+            # koleksiyon sirasinda hemen yap - ayri bir offline script'e
+            # gerek kalmasin. only_unmatched=True: sadece bu cycle'in yeni
+            # satirlari (tum run'i her seferinde yeniden islemek yerine).
+            run_map_matching(conn, run_id, only_unmatched=True)
 
         run_gold_validation_collector(conn, run_id, delay_between_calls=GOLD_BURST_CALL_DELAY_SECONDS, lines=lines)
 
@@ -81,7 +87,7 @@ def run_gold_burst(conn, run_id: int, lines: list, burst_minutes: float):
 
 def main(duration_minutes: int, session_label: str,
          validation_every_minutes: int, validation_burst_minutes: int,
-         lines_filter: str = None):
+         lines_filter: str = None, cycle_seconds: int = DEFAULT_CYCLE_INTERVAL_SECONDS):
     all_lines = list(PILOT_LINE_STOPS.keys())
     if lines_filter:
         requested = [l.strip() for l in lines_filter.split(",")]
@@ -98,7 +104,8 @@ def main(duration_minutes: int, session_label: str,
         collector_version=f"{COLLECTOR_VERSION}{version_suffix}",
     )
     print(f"Dual collector basladi. ingestion_run_id={run_id}, "
-          f"hedef sure={duration_minutes} dk, hatlar={lines}, session={session_label or '(belirtilmedi)'}")
+          f"hedef sure={duration_minutes} dk, hatlar={lines}, session={session_label or '(belirtilmedi)'}, "
+          f"cycle={cycle_seconds}sn")
     print(f"GOLD validation burst: her {validation_every_minutes} dk'da bir, "
           f"{validation_burst_minutes} dk boyunca support {GOLD_SUPPORT_TICK_SECONDS}sn cadence")
     print("Erken durdurmak icin Ctrl+C\n")
@@ -132,10 +139,14 @@ def main(duration_minutes: int, session_label: str,
                 print(f"  [main] Hat {line_no}: {result}")
                 time.sleep(DELAY_BETWEEN_CALLS)
 
+            # Faz 4: bkz. run_gold_burst - ayni gerekce, her normal cycle
+            # sonrasi da yeni gozlemler hemen map-match edilir.
+            run_map_matching(conn, run_id, only_unmatched=True)
+
             run_support_collector(conn, run_id, delay_between_lines=DELAY_BETWEEN_CALLS, lines=lines)
 
             elapsed = time.monotonic() - cycle_start
-            remaining = max(0, CYCLE_INTERVAL_SECONDS - elapsed)
+            remaining = max(0, cycle_seconds - elapsed)
             time.sleep(remaining)
 
     except KeyboardInterrupt:
@@ -161,6 +172,11 @@ if __name__ == "__main__":
     parser.add_argument("--lines", type=str, default=None,
                          help="Faz 3: sadece bu hatlari topla (virgulle ayir, ör. '761'). "
                               "Belirtilmezse tum pilot hatlar (515,121,761) toplanir.")
+    parser.add_argument("--cycle-seconds", type=int, default=DEFAULT_CYCLE_INTERVAL_SECONDS,
+                         help=f"Faz 4: normal (burst disi) cycle araligi (sn). Varsayilan "
+                              f"{DEFAULT_CYCLE_INTERVAL_SECONDS}sn. DUSURMEDEN ONCE: dis API'de "
+                              f"dokumante edilmemis bir rate limit var (bkz. CLAUDE.md) - kucuk "
+                              f"adimlarla test edin.")
     args = parser.parse_args()
     main(args.minutes, args.session_label, args.validation_every_minutes,
-         args.validation_burst_minutes, args.lines)
+         args.validation_burst_minutes, args.lines, args.cycle_seconds)

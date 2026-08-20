@@ -58,6 +58,48 @@ def fetch_latest_observation(conn, vehicle_id: str, line_no: str):
         return cur.fetchone()
 
 
+def fetch_observation_at(conn, vehicle_id: str, line_no: str, at_time):
+    """Faz 4 replay: 'T0 = su an' yerine 'T0 = at_time'deki (veya ondan hemen
+    once) en son GOOD/DEGRADED, stale olmayan gozlem. Ayni future-leakage
+    korumasi (observed_at <= at_time) - gecmis bir ana "o an model ne
+    tahmin ederdi" sorusu icin, gelecekteki hicbir gozleme bakilmaz."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT observed_at, route_id, distance_along_route_m,
+                   progress_along_route, distance_to_route_m
+            FROM vehicle_observations
+            WHERE vehicle_id = %s AND line_no = %s
+              AND observed_at <= %s
+              AND map_match_quality IN ('GOOD', 'DEGRADED')
+              AND position_quality != 'STALE_POSITION'
+              AND distance_along_route_m IS NOT NULL
+            ORDER BY observed_at DESC
+            LIMIT 1
+            """,
+            (vehicle_id, line_no, at_time),
+        )
+        return cur.fetchone()
+
+
+def fetch_next_stop(conn, route_id: int, distance_along_route_m: float):
+    """Aracin su anki route-ilerlemesinin hemen onundeki ilk durak (replay'de
+    'hangi durak icin ETA gosterelim' sorusuna otomatik cevap)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT s.stop_id, s.stop_name, rss.distance_along_route_m
+            FROM route_stop_sequence rss
+            JOIN stops s ON s.id = rss.stop_id
+            WHERE rss.route_id = %s AND rss.distance_along_route_m > %s
+            ORDER BY rss.distance_along_route_m ASC
+            LIMIT 1
+            """,
+            (route_id, distance_along_route_m),
+        )
+        return cur.fetchone()
+
+
 def fetch_route_direction(conn, route_id: int):
     with conn.cursor() as cur:
         cur.execute("SELECT direction, total_length_m FROM routes WHERE id = %s", (route_id,))
@@ -79,8 +121,17 @@ def fetch_stop_distance_along(conn, route_id: int, target_stop_id: str):
         return row[0] if row else None
 
 
-def build_feature_row(conn, vehicle_id: str, line_no: str, target_stop_id: str) -> dict:
-    obs = fetch_latest_observation(conn, vehicle_id, line_no)
+def build_feature_row(conn, vehicle_id: str, line_no: str, target_stop_id: str, at_time=None) -> dict:
+    """at_time=None: canli kullanim, T0 = aracin en son gozlemi (mevcut davranis,
+    degismedi). at_time verilirse (Faz 4 replay): T0 = o zamandaki (veya hemen
+    onceki) en son gozlem - 'gecmiste o an model ne tahmin ederdi' sorusu icin,
+    gelecekteki hicbir gozleme bakilmaz (fetch_observation_at ayni observed_at
+    <= at_time filtresini uygular)."""
+    obs = (
+        fetch_latest_observation(conn, vehicle_id, line_no)
+        if at_time is None
+        else fetch_observation_at(conn, vehicle_id, line_no, at_time)
+    )
     if obs is None:
         raise ValueError(f"Arac {vehicle_id} (hat {line_no}) icin uygun (GOOD/DEGRADED, "
                           f"stale olmayan) guncel bir gozlem bulunamadi.")
@@ -150,13 +201,15 @@ def build_feature_row(conn, vehicle_id: str, line_no: str, target_stop_id: str) 
     }, t0
 
 
-def predict_eta(conn, vehicle_id: str, line_no: str, target_stop_id: str, model: CatBoostRegressor = None):
-    """Doner: (predicted_eta_seconds, t0_observed_at, feature_row_dict)"""
+def predict_eta(conn, vehicle_id: str, line_no: str, target_stop_id: str,
+                 model: CatBoostRegressor = None, at_time=None):
+    """Doner: (predicted_eta_seconds, t0_observed_at, feature_row_dict).
+    at_time: bkz. build_feature_row - None ise canli davranis (degismedi)."""
     if model is None:
         model = CatBoostRegressor()
         model.load_model(str(MODEL_PATH))
 
-    feature_row, t0 = build_feature_row(conn, vehicle_id, line_no, target_stop_id)
+    feature_row, t0 = build_feature_row(conn, vehicle_id, line_no, target_stop_id, at_time=at_time)
 
     X = pd.DataFrame([feature_row])[MODEL_FEATURE_COLUMNS]
     for col in CATEGORICAL_FEATURES:

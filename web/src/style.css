@@ -1,0 +1,204 @@
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+
+#map { position: absolute; inset: 0; z-index: 0; }
+
+#view-toggle-btn {
+  position: absolute;
+  bottom: 30px;
+  right: 12px;
+  z-index: 1000;
+  width: auto;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+#view-toggle-btn.active { background: #2c6ecb; border-color: #2c6ecb; }
+
+#panel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 14px 16px;
+  width: 300px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  font-size: 13px;
+}
+
+#panel h1 { font-size: 15px; margin: 0 0 10px; }
+
+.field { margin-bottom: 10px; }
+.field label { display: block; margin-bottom: 4px; font-weight: 600; }
+
+select, button, input[type="range"] { width: 100%; }
+
+.checkboxes label { display: inline-block; width: auto; margin-right: 12px; font-weight: normal; }
+
+button {
+  padding: 6px 10px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #222;
+  color: white;
+  cursor: pointer;
+}
+
+.transport-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.transport-row button { flex: 1; }
+.transport-row select { width: 70px; }
+
+#clock { text-align: center; font-variant-numeric: tabular-nums; margin-top: 4px; }
+
+#legend { font-size: 12px; margin-top: 8px; }
+#legend div { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.good { background: #2ecc71; }
+.dot.degraded { background: #f1c40f; }
+.dot.rejected { background: #95a5a6; }
+.dot.arrival { background: #e74c3c; }
+
+#status { margin-top: 8px; color: #555; min-height: 16px; }
+
+.mode-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.mode-tab {
+  flex: 1;
+  background: #eee;
+  color: #333;
+  border: 1px solid #ccc;
+}
+.mode-tab.active { background: #222; color: #fff; border-color: #222; }
+
+#live-status {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: #f4f4f4;
+}
+#live-status.active { background: #eafbf0; color: #1e7a3d; }
+#live-status.inactive { background: #fdecea; color: #a83226; }
+
+.eta-label {
+  background: rgba(20, 20, 20, 0.85);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.arrival-pulse {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid #e74c3c;
+  box-sizing: border-box;
+  animation: arrival-pulse-anim 1.2s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes arrival-pulse-anim {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+#eta-table-panel {
+  position: absolute;
+  /* top:110px - MapLibre'nin varsayilan sag-ust NavigationControl'unun
+     (yakinlastir/uzaklastir/pusula, ~90px yukseklik) altinda kalsin diye -
+     ikisi de sag-ust kosede oldugu icin ust uste binip kontrolleri
+     gizliyordu (bkz. kullanici bildirimi). */
+  top: 110px;
+  right: 12px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 12px 14px;
+  width: 280px;
+  max-height: calc(100vh - 122px);
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+}
+#eta-table-panel h2 { font-size: 13px; margin: 0 0 8px; }
+#eta-table { width: 100%; border-collapse: collapse; }
+#eta-table th, #eta-table td { text-align: left; padding: 3px 4px; border-bottom: 1px solid #eee; }
+#eta-table th { color: #666; font-weight: 600; }
+#eta-table tr.warn td { color: #c0392b; }
+
+#vehicle-detail-panel {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 8px;
+  padding: 14px 16px;
+  width: 280px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  font-size: 13px;
+}
+#vehicle-detail-panel h2 { font-size: 14px; margin: 0 0 10px; }
+#vehicle-detail-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  line-height: 1;
+  font-size: 16px;
+  border-radius: 50%;
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
+.detail-row span { color: #666; }
+.detail-row strong { text-align: right; font-weight: 600; }
+
+.detail-sparkline { margin-top: 10px; padding-top: 8px; border-top: 1px solid #eee; }
+.detail-sparkline > span { display: block; color: #666; font-size: 12px; margin-bottom: 4px; }
+.speed-sparkline { display: block; }
+.speed-sparkline-label { display: block; font-size: 11px; color: #888; margin-top: 2px; }
+
+#vehicle-follow-btn {
+  margin-top: 10px;
+  background: #2c6ecb;
+  border-color: #2c6ecb;
+  font-size: 12px;
+}
+#vehicle-follow-btn.active { background: #e67e22; border-color: #e67e22; }
+
+#scrubber-wrap { position: relative; }
+#scrubber-ticks { position: absolute; inset: 0; pointer-events: none; }
+.scrubber-tick {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #e74c3c;
+  opacity: 0.7;
+}
+
+/* Mobil / dar ekranlar: panelleri kucult ve gerekirse dikey istifle,
+   sabit genislikler kucuk viewport'larda tasmasin diye. */
+@media (max-width: 700px) {
+  #panel, #eta-table-panel, #vehicle-detail-panel {
+    width: calc(100vw - 24px);
+    max-width: 340px;
+  }
+  #eta-table-panel { max-height: 40vh; }
+}

@@ -12,3 +12,5 @@ xgboost==3.4.1
 scikit-learn==1.9.0
 catboost==1.2.10
 shap==0.52.0
+fastapi==0.121.2
+uvicorn[standard]==0.35.0
