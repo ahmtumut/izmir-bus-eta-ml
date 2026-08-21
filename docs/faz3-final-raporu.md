@@ -198,6 +198,49 @@ GEÇERLİ DEĞİLDİ (XGBoost'un baseline üstünlüğü o zaman anlamsızdı).
 
 Grafik: `reports/shap-feature-importance.png`.
 
+## 9.1 Ek Analiz — `vehicle_id` Ablation Testi (Faz 4'te eklendi, retrospektif)
+
+Ana model `vehicle_id`'yi kasıtlı olarak feature dışı bıraktı ("aracın ID'sini ezberleyen değil,
+farklı araçlara genellenebilen bir model" hedefiyle, bkz. Bölüm 12). Bu kararın gerçekten doğru
+olup olmadığını ölçmek için, Faz 4 sırasında kontrollü bir ablation testi yazıldı
+(`app/ml/ablation_vehicle_id.py`) ve çalıştırıldı: **aynı** train/validation/test split, **aynı**
+hiperparametreler (bu raporda kayıtlı final model hiperparametreleri aynen tekrar kullanıldı — fark
+sadece "`vehicle_id` eklendi mi eklenmedi mi"ye atfedilebilsin diye) ile, `vehicle_id` ekstra bir
+kategorik feature olarak eklenmiş bir CatBoost modeli eğitildi.
+
+**Sonuç** (`reports/ablation-vehicle-id.json`, 2474 satırlık aynı test seti):
+
+| | `vehicle_id` YOK (final model) | `vehicle_id` VAR (ablation) | Fark |
+|---|---|---|---|
+| MAE | 1.30 dk | 1.08 dk | **-16.6%** |
+| RMSE | 2.11 dk | 1.85 dk | -12.4% |
+| Median AE | 0.85 dk | 0.75 dk | -12.0% |
+| ±1dk doğruluk | %56.3 | %61.0 | +4.8pp |
+| ±2dk doğruluk | %80.2 | %87.2 | +7.0pp |
+| ±3dk doğruluk | %91.4 | %95.7 | +4.3pp |
+
+`vehicle_id` eklenince test MAE **%16.6 düştü** — betiğin kendi otomatik yorumu (%5 eşik üzerinden):
+*"Bu, modelin kısmen araç kimliğine göre ezberleme yaptığına işaret ediyor olabilir; gerçek dünyada
+YENİ bir araçta bu avantaj işe yaramaz. Mevcut 'vehicle_id dışarıda bırakma' kararı DOĞRULANDI (feature'ın
+katkısı cazip görünse de güvenilir/genellenebilir değil)."*
+
+**Bu yoruma ek, dürüst bir gözlem:** Test setindeki 2474 satırın sadece **354'ü (%14.3)**, train setinde
+de görülmüş bir `vehicle_id`'ye ait (`n_test_rows_vehicle_seen_in_train=354`, `n_unique_vehicles_train=35`,
+`n_unique_vehicles_test=10`). Yani MAE iyileşmesinin büyük kısmı, test satırlarının **%85.7'sinde**
+modelin **hiç görmediği** bir `vehicle_id` kategorisiyle gerçekleşti — bu, saf "ezberleme" açıklamasıyla
+tam örtüşmüyor; `vehicle_id`'nin katkısı muhtemelen kısmen dolaylı bir sinyal taşıması (örn. belirli
+araçların sistematik olarak belirli hat/vardiya kombinasyonlarında çalışması) ile de açıklanabilir.
+Feature importance sıralamasında `vehicle_id` 14 feature içinde **8. sırada** (`distance_remaining_m`'in
+~24'te biri kadar etkili) — göz ardı edilebilir değil ama baskın da değil.
+
+**Sonuç olarak:** Ablation testi MAE'de belirgin bir iyileşme gösterse de, bu iyileşmenin büyük kısmının
+görülmemiş araçlarda da ortaya çıkması, riski basit bir "kimlik ezberleme" senaryosundan biraz daha
+karmaşık hale getiriyor. Mevcut "vehicle_id dışarıda bırakma" kararı, görev talimatının açık gerekçesi
+(genellenebilir bir model hedefi, üretimde her zaman yeni/az-görülmüş araçlar olacağı) nedeniyle
+**korunuyor** — ancak bu testin gösterdiği kadarıyla `vehicle_id`'nin tamamen faydasız olmadığı da not
+düşülmeli; ileride ayrı bir çalışmada (örn. araç tipi/kapasitesi gibi dolaylı, genellenebilir bir proxy
+feature ile) bu sinyalin bir kısmının güvenli şekilde yakalanıp yakalanamayacağı araştırılabilir.
+
 ## 10. Eğitim/Inference Süreleri ve Model Boyutu
 
 | | XGBoost | CatBoost |

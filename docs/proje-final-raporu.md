@@ -262,8 +262,11 @@ işlevi de üstleniyor.
    performansı yorumlanırken göz önünde bulundurulmalı.
 5. **GPS "freeze" hipotezi** (Faz 1'de gözlendi) hiçbir fazda kesin olarak doğrulanmadı/çürütülmedi —
    açık bir araştırma sorusu olarak kalıyor.
-6. Ablation testi (`vehicle_id`) kodu yazıldı ama bu raporun hazırlandığı anda sayısal sonucu
-   doğrulanmadı — çalıştırılıp `reports/ablation-vehicle-id.json` okunmalı.
+6. Ablation testi (`vehicle_id`) sonucu okunup Faz 3 raporuna eklendi (bkz. `docs/faz3-final-raporu.md`
+   §9.1): `vehicle_id` eklenince test MAE %16.6 düşüyor, ancak test satırlarının %85.7'si modelin hiç
+   görmediği araçlara ait olduğu için bu saf bir "kimlik ezberleme" bulgusu değil — dolaylı bir sinyal
+   taşıdığına işaret ediyor. `vehicle_id` dışarıda bırakma kararı yine de korunuyor (üretimde
+   genellenebilirlik önceliği).
 
 ---
 
